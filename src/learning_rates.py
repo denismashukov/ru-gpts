@@ -36,8 +36,8 @@ class AnnealingLR(_LRScheduler):
         self.min_lr = min_lr
         self._last_lr = start_lr
         self._min_reached = False
-        if torch.distributed.get_rank() == 0:
-            print('learning rate decaying', decay_style)
+        #if torch.distributed.get_rank() == 0:
+        #    print('learning rate decaying', decay_style)
 
     def get_lr(self):
         # https://openreview.net/pdf?id=BJYwwY9ll pg. 4

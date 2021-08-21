@@ -18,7 +18,7 @@
 import math
 
 import torch
-from apex.normalization.fused_layer_norm import FusedLayerNorm as LayerNorm
+#from apex.normalization.fused_layer_norm import FusedLayerNorm as LayerNorm
 from .initialize import get_model_parallel_world_size
 from .layers import ColumnParallelLinear
 from .layers import RowParallelLinear
@@ -62,9 +62,9 @@ class GPT3ParallelSelfAttention(torch.nn.Module):
         self.use_deepspeed_sparse = use_deepspeed_sparse
         if DEEPSPEED_WRAP:
             deepspeed = DEEPSPEED_WRAP.deepspeed
-            from deepspeed.ops.sparse_attention import SparseSelfAttention
-        if self.use_deepspeed_sparse is not None:
-            self.sparse_self_attention = SparseSelfAttention(self.use_deepspeed_sparse)
+            #from deepspeed.ops.sparse_attention import SparseSelfAttention
+        #if self.use_deepspeed_sparse is not None:
+            #self.sparse_self_attention = SparseSelfAttention(self.use_deepspeed_sparse)
         # Set output layer initialization if not provided.
         if output_layer_init_method is None:
             output_layer_init_method = init_method
@@ -268,7 +268,7 @@ class GPT3ParallelTransformerLayer(torch.nn.Module):
             output_layer_init_method = init_method
 
         # Layernorm on the input data.
-        self.input_layernorm = LayerNorm(hidden_size, eps=layernorm_epsilon)
+        self.input_layernorm = torch.nn.LayerNorm(hidden_size, eps=layernorm_epsilon)
 
         # Self attention.
         self.attention = GPT3ParallelSelfAttention(
@@ -281,7 +281,7 @@ class GPT3ParallelTransformerLayer(torch.nn.Module):
             use_deepspeed_sparse=use_deepspeed_sparse)
 
         # Layernorm on the input data.
-        self.post_attention_layernorm = LayerNorm(hidden_size,
+        self.post_attention_layernorm = torch.nn.LayerNorm(hidden_size,
                                                   eps=layernorm_epsilon)
 
         # MLP
@@ -380,8 +380,8 @@ class GPT3ParallelTransformer(torch.nn.Module):
                  sparse_mode='all'):
         super(GPT3ParallelTransformer, self).__init__()
 
-        if DEEPSPEED_WRAP:
-            from deepspeed.ops.sparse_attention import SparseSelfAttention
+       # if DEEPSPEED_WRAP:
+            #from deepspeed.ops.sparse_attention import SparseSelfAttention
 
         # Store activation checkpoiting flag.
         self.checkpoint_activations = checkpoint_activations
@@ -416,7 +416,8 @@ class GPT3ParallelTransformer(torch.nn.Module):
             [get_layer(i, num_layers) for i in range(num_layers)])
 
         # Final layer norm before output.
-        self.final_layernorm = LayerNorm(hidden_size, eps=layernorm_epsilon)
+        #self.final_layernorm = LayerNorm(hidden_size, eps=layernorm_epsilon)
+        self.final_layernorm = torch.nn.LayerNorm(hidden_size, eps=layernorm_epsilon)
 
         if DEEPSPEED_WRAP:
             if DEEPSPEED_WRAP.deepspeed.checkpointing.is_configured():

@@ -124,16 +124,16 @@ def gpt3_get_params_for_weight_decay_optimization(module):
     weight_decay_params = {'params': []}
     no_weight_decay_params = {'params': [], 'weight_decay': 0.0}
     for module_ in module.modules():
-        if isinstance(module_, (mpu.LayerNorm, torch.nn.LayerNorm)):
-            no_weight_decay_params['params'].extend(
-                [p for p in list(module_._parameters.values())
-                 if p is not None])
-        else:
-            weight_decay_params['params'].extend(
-                [p for n, p in list(module_._parameters.items())
-                 if p is not None and n != 'bias'])
-            no_weight_decay_params['params'].extend(
-                [p for n, p in list(module_._parameters.items())
-                 if p is not None and n == 'bias'])
+        #if isinstance(module_, (mpu.LayerNorm, torch.nn.LayerNorm)):
+        #    no_weight_decay_params['params'].extend(
+        #        [p for p in list(module_._parameters.values())
+        #         if p is not None])
+        #else:
+        weight_decay_params['params'].extend(
+            [p for n, p in list(module_._parameters.items())
+             if p is not None and n != 'bias'])
+        no_weight_decay_params['params'].extend(
+            [p for n, p in list(module_._parameters.items())
+             if p is not None and n == 'bias'])
 
     return weight_decay_params, no_weight_decay_params

@@ -18,14 +18,10 @@
 # repo: https://github.com/pytorch/pytorch
 
 
-import math
-
 import torch
 import torch.nn.functional as F
 import torch.nn.init as init
 from torch.nn.parameter import Parameter
-
-from apex.normalization.fused_layer_norm import FusedLayerNorm as LayerNorm
 
 from .initialize import get_model_parallel_rank
 from .initialize import get_model_parallel_world_size
@@ -33,10 +29,8 @@ from .mappings import copy_to_model_parallel_region
 from .mappings import gather_from_model_parallel_region
 from .mappings import reduce_from_model_parallel_region
 from .mappings import scatter_to_model_parallel_region
-from .random import get_cuda_rng_tracker
-from .utils import divide
-from .utils import split_tensor_along_last_dim
 from .utils import VocabUtility
+from .utils import divide
 
 
 def _initialize_affine_weight(weight, output_size, input_size,
@@ -100,8 +94,10 @@ class VocabParallelEmbedding(torch.nn.Module):
         # Divide the weight matrix along the vocaburaly dimension.
         self.vocab_start_index, self.vocab_end_index = \
             VocabUtility.vocab_range_from_global_vocab_size(
-                self.num_embeddings, get_model_parallel_rank(),
-                get_model_parallel_world_size())
+                #self.num_embeddings, get_model_parallel_rank(),
+                self.num_embeddings, 1,
+                #get_model_parallel_world_size())
+                1)
         self.num_embeddings_per_partition = self.vocab_end_index - \
                                             self.vocab_start_index
 

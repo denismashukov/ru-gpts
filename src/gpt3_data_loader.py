@@ -84,6 +84,7 @@ def make_gpt3_dataloaders(args):
         tqdm=True)
 
     def make_data_loader_(data_path, dataset_args):
+        data_path = '/Users/denismashukov/Downloads/train.list'
         print_rank_0(f'Load RuGPT3 Dataset from {data_path}, {dataset_args.max_files_load} files per process')
         dataset = RuGpt3TextDataset(
             tokenizer=tokenizer,

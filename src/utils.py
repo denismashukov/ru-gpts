@@ -305,6 +305,8 @@ def get_checkpoint_iteration(args):
 
     return iteration, release, True
 
+def load_model(model, args):
+    return load_huggingface_model(model, args.load_huggingface, args.huggingface_double_pos_embeddings)
 
 def load_checkpoint(model, optimizer, lr_scheduler, args, deepspeed=False):
     """Load a model checkpoint."""
@@ -461,7 +463,7 @@ def move_weights(our, oai, dst2src=False, double_pos_embeddings=False):
     #    while isinstance(our, (torchDDP, model.distributed.DistributedDataParallel, FP16_Module)):
     #        our=our.module
     transformer_model = oai.transformer
-    load_weights(transformer_model.ln_f, our.transformer.final_layernorm, dst2src)
+    #load_weights(transformer_model.ln_f, our.transformer.final_layernorm, dst2src)
     load_weights(transformer_model.wte, our.word_embeddings, dst2src)
     load_weights(transformer_model.wpe, our.position_embeddings, dst2src, double_pos_embeddings=double_pos_embeddings)
 

@@ -1,0 +1,800 @@
+Last login: Tue Aug 17 20:35:07 on ttys008
+denismashukov@Deniss-MacBook-Pro .ssh % ssh -i "data_source_key.pem" ubuntu@ec2-13-48-132-250.eu-north-1.compute.amazonaws.com
+Welcome to Ubuntu 20.04.2 LTS (GNU/Linux 5.4.0-1045-aws x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Tue Aug 17 18:02:41 UTC 2021
+
+  System load:  0.97               Processes:             594
+  Usage of /:   18.1% of 96.88GB   Users logged in:       1
+  Memory usage: 0%                 IPv4 address for ens5: 172.31.14.194
+  Swap usage:   0%
+
+
+106 updates can be applied immediately.
+40 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+
+*** System restart required ***
+Last login: Tue Aug 17 17:51:37 2021 from 178.121.18.89
+ubuntu@ip-172-31-14-194:~$ unzip
+.aws/                                                  .local/                                                Linux/                                                 drive-download-20210817T180327Z-001.zip
+.cache/                                                .ssh/                                                  apex/                                                  vGPUSW-465.31-May2021-vGaming-Linux-Guest-Drivers.zip
+ubuntu@ip-172-31-14-194:~$ unzip drive-download-20210817T180327Z-001.zip
+Archive:  drive-download-20210817T180327Z-001.zip
+  inflating: repetitor_ru_english_valid.csv
+  inflating: repetitor_ru_english_train.csv
+ubuntu@ip-172-31-14-194:~$ nvidia-smi
+Tue Aug 17 18:05:40 2021
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 450.51.05    Driver Version: 450.51.05    CUDA Version: 11.0     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  Tesla T4            On   | 00000000:00:1E.0 Off |                    0 |
+| N/A   30C    P8     9W /  70W |      3MiB / 15109MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+ubuntu@ip-172-31-14-194:~$ nvidia-smi
+Tue Aug 17 18:06:21 2021
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 450.51.05    Driver Version: 450.51.05    CUDA Version: 11.0     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  Tesla T4            On   | 00000000:00:1E.0 Off |                    0 |
+| N/A   30C    P8     9W /  70W |      0MiB / 15109MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+ubuntu@ip-172-31-14-194:~$ cd ${HOME}
+ubuntu@ip-172-31-14-194:~$ git clone  https://github.com/sberbank-ai/ru-gpts
+Cloning into 'ru-gpts'...
+remote: Enumerating objects: 651, done.
+remote: Counting objects: 100% (146/146), done.
+remote: Compressing objects: 100% (74/74), done.
+remote: Total 651 (delta 90), reused 117 (delta 72), pack-reused 505
+Receiving objects: 100% (651/651), 379.79 KiB | 2.12 MiB/s, done.
+Resolving deltas: 100% (390/390), done.
+ubuntu@ip-172-31-14-194:~$ echo repetitor_ru_english_train.csv > train.list
+ubuntu@ip-172-31-14-194:~$ echo repetitor_ru_english_valid.csv > valid.list
+ubuntu@ip-172-31-14-194:~$ export PYTHONPATH=${PYTHONPATH}:${HOME}/ru-gpts
+ubuntu@ip-172-31-14-194:~$ python3 ru-gpts/pretrain_gpt3.py \
+>   --train-data-path "train.list" \
+>   --test-data-path "valid.list" \
+>   --max-files-per-process 100 \
+>   --logging-dir="log" \
+>   --save model_medium \
+>   --load-huggingface sberbank-ai/rugpt3medium_based_on_gpt2 \
+>   --save-interval 100 \
+>   --log-interval 100 \
+>   --eval-interval 100 \
+>   --eval-iters 100 \
+>   --num-layers 24 \
+>   --hidden-size 1024 \
+>   --num-attention-heads 16 \
+>   --make-vocab-size-divisible-by 1 \
+>   --batch-size 1 \
+>   --seq-length 1024 \
+>   --max-position-embeddings 2048 \
+>   --train-iters 500000 \
+>   --resume-dataloader \
+>   --distributed-backend nccl \
+>   --lr 0.0002 \
+>   --lr-decay-style cosine \
+>   --lr-decay-iters 200000 \
+>   --min-lr 0.000005 \
+>   --warmup .001 \
+>   --make-vocab-size-divisible-by=1
+using world size: 1 and model-parallel size: 1
+ > using dynamic loss scaling
+> initializing model parallel with size 1
+Pretrain GPT3 model
+arguments:
+  attention_dropout ............ 0.1
+  num_attention_heads .......... 16
+  hidden_size .................. 1024
+  intermediate_size ............ None
+  num_layers ................... 24
+  layernorm_epsilon ............ 1e-05
+  hidden_dropout ............... 0.1
+  max_position_embeddings ...... 2048
+  vocab_size ................... 30522
+  deep_init .................... False
+  make_vocab_size_divisible_by . 1
+  cpu_optimizer ................ False
+  cpu_torch_adam ............... False
+  sparse_mode .................. all
+  fp16 ......................... False
+  fp32_embedding ............... False
+  fp32_layernorm ............... False
+  fp32_tokentypes .............. False
+  fp32_allreduce ............... False
+  hysteresis ................... 2
+  loss_scale ................... None
+  loss_scale_window ............ 1000
+  min_scale .................... 1
+  batch_size ................... 1
+  weight_decay ................. 0.01
+  checkpoint_activations ....... False
+  checkpoint_num_layers ........ 1
+  deepspeed_activation_checkpointing  False
+  clip_grad .................... 1.0
+  train_iters .................. 500000
+  log_interval ................. 100
+  logging_dir .................. log
+  exit_interval ................ None
+  seed ......................... 1234
+  reset_position_ids ........... False
+  reset_attention_mask ......... False
+  lr_decay_iters ............... 200000
+  lr_decay_style ............... cosine
+  lr ........................... 0.0002
+  min_lr ....................... 5e-06
+  warmup ....................... 0.001
+  save ......................... model_medium
+  save_interval ................ 100
+  no_save_optim ................ False
+  no_save_rng .................. False
+  load ......................... None
+  no_load_optim ................ False
+  log_memory ................... False
+  no_load_rng .................. False
+  load_huggingface ............. sberbank-ai/rugpt3medium_based_on_gpt2
+  export_huggingface ........... None
+  huggingface_double_pos_embeddings  False
+  load_tag .....................
+  cache_prefix ................. _
+  finetune ..................... False
+  resume_dataloader ............ True
+  distributed_backend .......... nccl
+  local_rank ................... None
+  eval_batch_size .............. None
+  eval_iters ................... 100
+  eval_interval ................ 100
+  eval_seq_length .............. None
+  eval_max_preds_per_seq ....... None
+  overlapping_eval ............. 32
+  cloze_eval ................... False
+  eval_hf ...................... False
+  load_openai .................. False
+  temperature .................. 1.0
+  top_p ........................ 0.0
+  top_k ........................ 0
+  out_seq_length ............... 256
+  tg_token_name ................ token.txt
+  model_parallel_size .......... 1
+  shuffle ...................... False
+  train_data ................... None
+  use_npy_data_loader .......... False
+  train_data_path .............. train.list
+  val_data_path ................
+  test_data_path ............... valid.list
+  input_data_sizes_file ........ sizes.txt
+  delim ........................ ,
+  text_key ..................... sentence
+  eval_text_key ................ None
+  valid_data ................... None
+  split ........................ 1000,1,1
+  test_data .................... None
+  overwrite_cache .............. False
+  lazy_loader .................. False
+  loose_json ................... False
+  presplit_sentences ........... False
+  num_workers .................. 2
+  tokenizer_path ............... None
+  cache_dir .................... None
+  use_tfrecords ................ False
+  seq_length ................... 1024
+  max_files_per_process ........ 100
+  max_preds_per_seq ............ None
+  cuda ......................... True
+  rank ......................... 0
+  world_size ................... 1
+  dynamic_loss_scale ........... True
+> initializing model parallel cuda seeds on global rank 0, model parallel rank 0, and data parallel rank 0 with model parallel seed: 3952 and data parallel seed: 1234
+Load tokenizer from sberbank-ai/rugpt3medium_based_on_gpt2
+Downloading: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1.61M/1.61M [00:00<00:00, 3.87MB/s]
+Downloading: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1.27M/1.27M [00:00<00:00, 3.09MB/s]
+Load RuGPT3 Dataset from train.list, 100 files per process
+R0/1: Loading dataset train.list
+R0/1: Check filelist train.list with root dir
+R0/1: Shard [0, 1]
+R0/1: Loaded 0/1 files
+R0/1: Loaded 1865 examples, 1909760 tokens
+Load RuGPT3 Dataset from valid.list, 100 files per process
+R0/1: Loading dataset valid.list
+R0/1: Check filelist valid.list with root dir
+R0/1: Shard [0, 1]
+  0%|                                                                                                                                                                                                                   | 0/1 [00:00<?, ?it/s]R0/1: Loaded 0/1 files
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00,  1.04it/s]
+R0/1: Loaded 209 examples, 214016 tokens
+> padded vocab (size: 50257) with 0 dummy tokens (new size: 50257)
+> end-of-document token: 0
+building GPT3 model ...
+Load huggingface model from sberbank-ai/rugpt3medium_based_on_gpt2
+Downloading: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 674/674 [00:00<00:00, 622kB/s]
+Downloading: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1.73G/1.73G [01:03<00:00, 27.2MB/s]
+Loaded huggingface model <class 'src.model.gpt3_modeling.GPT3Model'>
+ > number of parameters on model parallel rank 0: 355871744
+Optimizer = FusedAdam
+learning rate decaying cosine
+Resume train set from iteration 0
+--Start training loop--
+Traceback (most recent call last):
+  File "ru-gpts/pretrain_gpt3.py", line 830, in <module>
+    main()
+  File "ru-gpts/pretrain_gpt3.py", line 804, in main
+    iteration, skipped = train(model, optimizer,
+  File "ru-gpts/pretrain_gpt3.py", line 466, in train
+    lm_loss, skipped_iter = train_step(sample,
+  File "ru-gpts/pretrain_gpt3.py", line 406, in train_step
+    lm_loss = forward_step(sample, model, args, timers, tokenizer, iteration, tb_writer)
+  File "ru-gpts/pretrain_gpt3.py", line 298, in forward_step
+    output = model(tokens, position_ids, attention_mask)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/model/distributed.py", line 79, in forward
+    return self.module(*inputs, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/model/gpt3_modeling.py", line 108, in forward
+    transformer_output = self.transformer(embeddings, attention_mask)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/mpu/transformer.py", line 449, in forward
+    hidden_states = layer(hidden_states, attention_mask)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/mpu/transformer.py", line 301, in forward
+    attention_output = self.attention(layernorm_output, ltor_mask)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/mpu/transformer.py", line 139, in forward
+    attention_scores = torch.mul(attention_scores, ltor_mask) - 10000.0 * (1.0 - ltor_mask)
+RuntimeError: CUDA out of memory. Tried to allocate 64.00 MiB (GPU 0; 14.76 GiB total capacity; 13.68 GiB already allocated; 5.75 MiB free; 13.71 GiB reserved in total by PyTorch)
+ubuntu@ip-172-31-14-194:~$ python3 ru-gpts/pretrain_gpt3.py \
+>   --train-data-path "train.list" \
+>   --test-data-path "valid.list" \
+>   --max-files-per-process 100 \
+>   --logging-dir="log" \
+>   --save model \
+>   --load-huggingface sberbank-ai/rugpt3large_based_on_gpt2 \
+>   --save-interval 1000 \
+>   --model-parallel-size 1 \
+>   --num-layers 24 \
+>   --hidden-size 1536 \
+>   --num-attention-heads 16 \
+>   --batch-size 1 \
+>   --seq-length 2048 \
+>   --max-position-embeddings 2048 \
+>   --vocab-size 50257 \
+>   --train-iters 200000 \
+>   --resume-dataloader \
+>   --distributed-backend nccl \
+>   --lr 0.00015 \
+>   --lr-decay-style cosine \
+>   --weight-decay 1e-2 \
+>   --warmup .01 \
+>   --log-interval 100 \
+>   --fp16 \
+>   --make-vocab-size-divisible-by=1
+using world size: 1 and model-parallel size: 1
+ > using dynamic loss scaling
+> initializing model parallel with size 1
+Pretrain GPT3 model
+arguments:
+  attention_dropout ............ 0.1
+  num_attention_heads .......... 16
+  hidden_size .................. 1536
+  intermediate_size ............ None
+  num_layers ................... 24
+  layernorm_epsilon ............ 1e-05
+  hidden_dropout ............... 0.1
+  max_position_embeddings ...... 2048
+  vocab_size ................... 50257
+  deep_init .................... False
+  make_vocab_size_divisible_by . 1
+  cpu_optimizer ................ False
+  cpu_torch_adam ............... False
+  sparse_mode .................. all
+  fp16 ......................... True
+  fp32_embedding ............... False
+  fp32_layernorm ............... False
+  fp32_tokentypes .............. False
+  fp32_allreduce ............... False
+  hysteresis ................... 2
+  loss_scale ................... None
+  loss_scale_window ............ 1000
+  min_scale .................... 1
+  batch_size ................... 1
+  weight_decay ................. 0.01
+  checkpoint_activations ....... False
+  checkpoint_num_layers ........ 1
+  deepspeed_activation_checkpointing  False
+  clip_grad .................... 1.0
+  train_iters .................. 200000
+  log_interval ................. 100
+  logging_dir .................. log
+  exit_interval ................ None
+  seed ......................... 1234
+  reset_position_ids ........... False
+  reset_attention_mask ......... False
+  lr_decay_iters ............... None
+  lr_decay_style ............... cosine
+  lr ........................... 0.00015
+  min_lr ....................... 1e-06
+  warmup ....................... 0.01
+  save ......................... model
+  save_interval ................ 1000
+  no_save_optim ................ False
+  no_save_rng .................. False
+  load ......................... None
+  no_load_optim ................ False
+  log_memory ................... False
+  no_load_rng .................. False
+  load_huggingface ............. sberbank-ai/rugpt3large_based_on_gpt2
+  export_huggingface ........... None
+  huggingface_double_pos_embeddings  False
+  load_tag .....................
+  cache_prefix ................. _
+  finetune ..................... False
+  resume_dataloader ............ True
+  distributed_backend .......... nccl
+  local_rank ................... None
+  eval_batch_size .............. None
+  eval_iters ................... 100
+  eval_interval ................ 1000
+  eval_seq_length .............. None
+  eval_max_preds_per_seq ....... None
+  overlapping_eval ............. 32
+  cloze_eval ................... False
+  eval_hf ...................... False
+  load_openai .................. False
+  temperature .................. 1.0
+  top_p ........................ 0.0
+  top_k ........................ 0
+  out_seq_length ............... 256
+  tg_token_name ................ token.txt
+  model_parallel_size .......... 1
+  shuffle ...................... False
+  train_data ................... None
+  use_npy_data_loader .......... False
+  train_data_path .............. train.list
+  val_data_path ................
+  test_data_path ............... valid.list
+  input_data_sizes_file ........ sizes.txt
+  delim ........................ ,
+  text_key ..................... sentence
+  eval_text_key ................ None
+  valid_data ................... None
+  split ........................ 1000,1,1
+  test_data .................... None
+  overwrite_cache .............. False
+  lazy_loader .................. False
+  loose_json ................... False
+  presplit_sentences ........... False
+  num_workers .................. 2
+  tokenizer_path ............... None
+  cache_dir .................... None
+  use_tfrecords ................ False
+  seq_length ................... 2048
+  max_files_per_process ........ 100
+  max_preds_per_seq ............ None
+  cuda ......................... True
+  rank ......................... 0
+  world_size ................... 1
+  dynamic_loss_scale ........... True
+> initializing model parallel cuda seeds on global rank 0, model parallel rank 0, and data parallel rank 0 with model parallel seed: 3952 and data parallel seed: 1234
+Load tokenizer from sberbank-ai/rugpt3large_based_on_gpt2
+Downloading: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1.71M/1.71M [00:00<00:00, 4.13MB/s]
+Downloading: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1.27M/1.27M [00:00<00:00, 3.08MB/s]
+Load RuGPT3 Dataset from train.list, 100 files per process
+R0/1: Loading dataset train.list
+R0/1: Check filelist train.list with root dir
+R0/1: Shard [0, 1]
+R0/1: Loaded 0/1 files
+R0/1: Loaded 932 examples, 1908736 tokens
+Load RuGPT3 Dataset from valid.list, 100 files per process
+R0/1: Loading dataset valid.list
+R0/1: Check filelist valid.list with root dir
+R0/1: Shard [0, 1]
+  0%|                                                                                                                                                                                                                   | 0/1 [00:00<?, ?it/s]R0/1: Loaded 0/1 files
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00,  1.02it/s]
+R0/1: Loaded 104 examples, 212992 tokens
+> padded vocab (size: 50257) with 0 dummy tokens (new size: 50257)
+> end-of-document token: 0
+building GPT3 model ...
+Load huggingface model from sberbank-ai/rugpt3large_based_on_gpt2
+Downloading: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 609/609 [00:00<00:00, 728kB/s]
+Downloading: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 3.14G/3.14G [00:48<00:00, 64.7MB/s]
+Loaded huggingface model <class 'src.model.gpt3_modeling.GPT3Model'>
+ > number of parameters on model parallel rank 0: 760300032
+Optimizer = FusedAdam
+learning rate decaying cosine
+Resume train set from iteration 0
+--Start training loop--
+Traceback (most recent call last):
+  File "ru-gpts/pretrain_gpt3.py", line 830, in <module>
+    main()
+  File "ru-gpts/pretrain_gpt3.py", line 804, in main
+    iteration, skipped = train(model, optimizer,
+  File "ru-gpts/pretrain_gpt3.py", line 466, in train
+    lm_loss, skipped_iter = train_step(sample,
+  File "ru-gpts/pretrain_gpt3.py", line 406, in train_step
+    lm_loss = forward_step(sample, model, args, timers, tokenizer, iteration, tb_writer)
+  File "ru-gpts/pretrain_gpt3.py", line 298, in forward_step
+    output = model(tokens, position_ids, attention_mask)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/model/distributed.py", line 79, in forward
+    return self.module(*inputs, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/fp16/fp16.py", line 72, in forward
+    return fp16_to_fp32(self.module(*(fp32_to_fp16(inputs)), **kwargs))
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/model/gpt3_modeling.py", line 108, in forward
+    transformer_output = self.transformer(embeddings, attention_mask)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/mpu/transformer.py", line 449, in forward
+    hidden_states = layer(hidden_states, attention_mask)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/mpu/transformer.py", line 301, in forward
+    attention_output = self.attention(layernorm_output, ltor_mask)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/ubuntu/ru-gpts/src/mpu/transformer.py", line 136, in forward
+    attention_scores = attention_scores / math.sqrt(
+RuntimeError: CUDA out of memory. Tried to allocate 128.00 MiB (GPU 0; 14.76 GiB total capacity; 13.51 GiB already allocated; 109.75 MiB free; 13.61 GiB reserved in total by PyTorch)
+ubuntu@ip-172-31-14-194:~$ python3 ru-gpts/pretrain_gpt3.py \
+>   --train-data-path "train.list" \
+>   --test-data-path "valid.list" \
+>   --max-files-per-process 100 \
+>   --logging-dir="log" \
+>   --save model \
+>   --load-huggingface sberbank-ai/rugpt3small_based_on_gpt2 \
+>   --save-interval 1000 \
+>   --log-interval 100 \
+>   --eval-interval 1000 \
+>   --eval-iters 1000 \
+>   --model-parallel-size 1 \
+>   --num-layers 12 \
+>   --hidden-size 768 \
+>   --num-attention-heads 12 \
+>   --batch-size 1 \
+>   --seq-length 256 \
+>   --max-position-embeddings 2048 \
+>   --train-iters 20000 \
+>   --resume-dataloader \
+>   --distributed-backend "nccl" \
+>   --lr 0.00015 \
+>   --lr-decay-style "cosine" \
+>   --lr-decay-iters 3200 \
+>   --clip-grad 0.5 \
+>   --warmup .004
+using world size: 1 and model-parallel size: 1
+ > using dynamic loss scaling
+> initializing model parallel with size 1
+Pretrain GPT3 model
+arguments:
+  attention_dropout ............ 0.1
+  num_attention_heads .......... 12
+  hidden_size .................. 768
+  intermediate_size ............ None
+  num_layers ................... 12
+  layernorm_epsilon ............ 1e-05
+  hidden_dropout ............... 0.1
+  max_position_embeddings ...... 2048
+  vocab_size ................... 30522
+  deep_init .................... False
+  make_vocab_size_divisible_by . 8
+  cpu_optimizer ................ False
+  cpu_torch_adam ............... False
+  sparse_mode .................. all
+  fp16 ......................... False
+  fp32_embedding ............... False
+  fp32_layernorm ............... False
+  fp32_tokentypes .............. False
+  fp32_allreduce ............... False
+  hysteresis ................... 2
+  loss_scale ................... None
+  loss_scale_window ............ 1000
+  min_scale .................... 1
+  batch_size ................... 1
+  weight_decay ................. 0.01
+  checkpoint_activations ....... False
+  checkpoint_num_layers ........ 1
+  deepspeed_activation_checkpointing  False
+  clip_grad .................... 0.5
+  train_iters .................. 20000
+  log_interval ................. 100
+  logging_dir .................. log
+  exit_interval ................ None
+  seed ......................... 1234
+  reset_position_ids ........... False
+  reset_attention_mask ......... False
+  lr_decay_iters ............... 3200
+  lr_decay_style ............... cosine
+  lr ........................... 0.00015
+  min_lr ....................... 1e-06
+  warmup ....................... 0.004
+  save ......................... model
+  save_interval ................ 1000
+  no_save_optim ................ False
+  no_save_rng .................. False
+  load ......................... None
+  no_load_optim ................ False
+  log_memory ................... False
+  no_load_rng .................. False
+  load_huggingface ............. sberbank-ai/rugpt3small_based_on_gpt2
+  export_huggingface ........... None
+  huggingface_double_pos_embeddings  False
+  load_tag .....................
+  cache_prefix ................. _
+  finetune ..................... False
+  resume_dataloader ............ True
+  distributed_backend .......... nccl
+  local_rank ................... None
+  eval_batch_size .............. None
+  eval_iters ................... 1000
+  eval_interval ................ 1000
+  eval_seq_length .............. None
+  eval_max_preds_per_seq ....... None
+  overlapping_eval ............. 32
+  cloze_eval ................... False
+  eval_hf ...................... False
+  load_openai .................. False
+  temperature .................. 1.0
+  top_p ........................ 0.0
+  top_k ........................ 0
+  out_seq_length ............... 256
+  tg_token_name ................ token.txt
+  model_parallel_size .......... 1
+  shuffle ...................... False
+  train_data ................... None
+  use_npy_data_loader .......... False
+  train_data_path .............. train.list
+  val_data_path ................
+  test_data_path ............... valid.list
+  input_data_sizes_file ........ sizes.txt
+  delim ........................ ,
+  text_key ..................... sentence
+  eval_text_key ................ None
+  valid_data ................... None
+  split ........................ 1000,1,1
+  test_data .................... None
+  overwrite_cache .............. False
+  lazy_loader .................. False
+  loose_json ................... False
+  presplit_sentences ........... False
+  num_workers .................. 2
+  tokenizer_path ............... None
+  cache_dir .................... None
+  use_tfrecords ................ False
+  seq_length ................... 256
+  max_files_per_process ........ 100
+  max_preds_per_seq ............ None
+  cuda ......................... True
+  rank ......................... 0
+  world_size ................... 1
+  dynamic_loss_scale ........... True
+> initializing model parallel cuda seeds on global rank 0, model parallel rank 0, and data parallel rank 0 with model parallel seed: 3952 and data parallel seed: 1234
+Load tokenizer from sberbank-ai/rugpt3small_based_on_gpt2
+Downloading: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1.71M/1.71M [00:00<00:00, 4.13MB/s]
+Downloading: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1.27M/1.27M [00:00<00:00, 3.09MB/s]
+Load RuGPT3 Dataset from train.list, 100 files per process
+R0/1: Loading dataset train.list
+R0/1: Check filelist train.list with root dir
+R0/1: Shard [0, 1]
+R0/1: Loaded 0/1 files
+R0/1: Loaded 7461 examples, 1910016 tokens
+Load RuGPT3 Dataset from valid.list, 100 files per process
+R0/1: Loading dataset valid.list
+R0/1: Check filelist valid.list with root dir
+R0/1: Shard [0, 1]
+  0%|                                                                                                                                                                                                                   | 0/1 [00:00<?, ?it/s]R0/1: Loaded 0/1 files
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00,  1.03it/s]
+R0/1: Loaded 838 examples, 214528 tokens
+> padded vocab (size: 50257) with 7 dummy tokens (new size: 50264)
+> end-of-document token: 0
+building GPT3 model ...
+Load huggingface model from sberbank-ai/rugpt3small_based_on_gpt2
+Downloading: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 608/608 [00:00<00:00, 795kB/s]
+Downloading: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 551M/551M [00:05<00:00, 106MB/s]
+Loaded huggingface model <class 'src.model.gpt3_modeling.GPT3Model'>
+ > number of parameters on model parallel rank 0: 125231616
+Optimizer = FusedAdam
+learning rate decaying cosine
+Resume train set from iteration 0
+--Start training loop--
+ iteration      100/   20000 | elapsed time per iteration (ms): 116.8 | learning rate 1.497E-04 | lm loss 3.4268 | perplexity 30.7787 |
+/home/ubuntu/.local/lib/python3.8/site-packages/torch/cuda/memory.py:344: FutureWarning: torch.cuda.memory_cached has been renamed to torch.cuda.memory_reserved
+  warnings.warn(
+/home/ubuntu/.local/lib/python3.8/site-packages/torch/cuda/memory.py:352: FutureWarning: torch.cuda.max_memory_cached has been renamed to torch.cuda.max_memory_reserved
+  warnings.warn(
+after 100 iterations memory (MB) | allocated: 1923.35302734375 | max allocated: 2587.39599609375 | cached: 3502.0 | max cached: 3502.0
+time (ms) | forward: 27.40 | backward: 70.09 | allreduce: 16.10 | optimizer: 18.77 | data loader: 0.08
+ iteration      200/   20000 | elapsed time per iteration (ms): 116.2 | learning rate 1.487E-04 | lm loss 3.3002 | perplexity 27.1178 |
+time (ms) | forward: 26.85 | backward: 70.14 | allreduce: 16.14 | optimizer: 18.71 | data loader: 0.07
+ iteration      300/   20000 | elapsed time per iteration (ms): 116.2 | learning rate 1.470E-04 | lm loss 3.3310 | perplexity 27.9673 |
+time (ms) | forward: 26.70 | backward: 70.34 | allreduce: 16.11 | optimizer: 18.69 | data loader: 0.07
+ iteration      400/   20000 | elapsed time per iteration (ms): 116.4 | learning rate 1.446E-04 | lm loss 3.2521 | perplexity 25.8456 |
+time (ms) | forward: 26.73 | backward: 70.46 | allreduce: 16.11 | optimizer: 18.69 | data loader: 0.07
+ iteration      500/   20000 | elapsed time per iteration (ms): 117.0 | learning rate 1.416E-04 | lm loss 3.1805 | perplexity 24.0594 |
+time (ms) | forward: 26.88 | backward: 70.93 | allreduce: 16.11 | optimizer: 18.68 | data loader: 0.08
+ iteration      600/   20000 | elapsed time per iteration (ms): 117.1 | learning rate 1.379E-04 | lm loss 3.1918 | perplexity 24.3311 |
+time (ms) | forward: 26.89 | backward: 71.01 | allreduce: 16.10 | optimizer: 18.67 | data loader: 0.08
+ iteration      700/   20000 | elapsed time per iteration (ms): 117.2 | learning rate 1.336E-04 | lm loss 3.1530 | perplexity 23.4055 |
+time (ms) | forward: 26.88 | backward: 71.23 | allreduce: 16.10 | optimizer: 18.66 | data loader: 0.08
+ iteration      800/   20000 | elapsed time per iteration (ms): 117.4 | learning rate 1.287E-04 | lm loss 3.0687 | perplexity 21.5148 |
+time (ms) | forward: 26.87 | backward: 71.40 | allreduce: 16.09 | optimizer: 18.66 | data loader: 0.08
+ iteration      900/   20000 | elapsed time per iteration (ms): 117.9 | learning rate 1.233E-04 | lm loss 3.0581 | perplexity 21.2862 |
+time (ms) | forward: 26.94 | backward: 71.82 | allreduce: 16.11 | optimizer: 18.66 | data loader: 0.08
+ iteration     1000/   20000 | elapsed time per iteration (ms): 118.1 | learning rate 1.174E-04 | lm loss 3.1076 | perplexity 22.3683 |
+time (ms) | forward: 26.92 | backward: 72.03 | allreduce: 16.11 | optimizer: 18.65 | data loader: 0.08
+global rank 0 is saving checkpoint at iteration    1000 to model/iter_0001000/mp_rank_00/model_optim_rng.pt
+  successfully saved model/iter_0001000/mp_rank_00/model_optim_rng.pt
+ iteration     1100/   20000 | elapsed time per iteration (ms): 149.4 | learning rate 1.112E-04 | lm loss 2.9517 | perplexity 19.1378 |
+time (ms) | forward: 27.28 | backward: 72.45 | allreduce: 16.12 | optimizer: 18.66 | data loader: 0.08
+ iteration     1200/   20000 | elapsed time per iteration (ms): 119.6 | learning rate 1.046E-04 | lm loss 3.0105 | perplexity 20.2977 |
+time (ms) | forward: 27.73 | backward: 72.57 | allreduce: 16.36 | optimizer: 18.68 | data loader: 0.08
+ iteration     1300/   20000 | elapsed time per iteration (ms): 118.7 | learning rate 9.767E-05 | lm loss 2.9756 | perplexity 19.6012 |
+time (ms) | forward: 27.04 | backward: 72.52 | allreduce: 16.14 | optimizer: 18.65 | data loader: 0.08
+ iteration     1400/   20000 | elapsed time per iteration (ms): 119.0 | learning rate 9.055E-05 | lm loss 2.9445 | perplexity 19.0020 |
+time (ms) | forward: 27.09 | backward: 72.75 | allreduce: 16.15 | optimizer: 18.65 | data loader: 0.08
+ iteration     1500/   20000 | elapsed time per iteration (ms): 119.3 | learning rate 8.329E-05 | lm loss 2.9088 | perplexity 18.3347 |
+time (ms) | forward: 27.07 | backward: 73.06 | allreduce: 16.13 | optimizer: 18.65 | data loader: 0.08
+ iteration     1600/   20000 | elapsed time per iteration (ms): 119.0 | learning rate 7.594E-05 | lm loss 2.9044 | perplexity 18.2543 |
+time (ms) | forward: 26.99 | backward: 72.92 | allreduce: 16.11 | optimizer: 18.62 | data loader: 0.07
+ iteration     1700/   20000 | elapsed time per iteration (ms): 119.8 | learning rate 6.859E-05 | lm loss 2.9120 | perplexity 18.3934 |
+time (ms) | forward: 27.14 | backward: 73.52 | allreduce: 16.13 | optimizer: 18.63 | data loader: 0.08
+ iteration     1800/   20000 | elapsed time per iteration (ms): 119.3 | learning rate 6.129E-05 | lm loss 2.8855 | perplexity 17.9118 |
+time (ms) | forward: 27.05 | backward: 73.13 | allreduce: 16.12 | optimizer: 18.61 | data loader: 0.08
+ iteration     1900/   20000 | elapsed time per iteration (ms): 120.0 | learning rate 5.413E-05 | lm loss 2.8484 | perplexity 17.2605 |
+time (ms) | forward: 27.07 | backward: 73.79 | allreduce: 16.12 | optimizer: 18.61 | data loader: 0.08
+ iteration     2000/   20000 | elapsed time per iteration (ms): 119.9 | learning rate 4.717E-05 | lm loss 2.9243 | perplexity 18.6206 |
+time (ms) | forward: 27.06 | backward: 73.71 | allreduce: 16.12 | optimizer: 18.61 | data loader: 0.07
+global rank 0 is saving checkpoint at iteration    2000 to model/iter_0002000/mp_rank_00/model_optim_rng.pt
+  successfully saved model/iter_0002000/mp_rank_00/model_optim_rng.pt
+ iteration     2100/   20000 | elapsed time per iteration (ms): 151.6 | learning rate 4.048E-05 | lm loss 2.8263 | perplexity 16.8830 |
+time (ms) | forward: 27.50 | backward: 74.14 | allreduce: 16.19 | optimizer: 18.63 | data loader: 0.08
+ iteration     2200/   20000 | elapsed time per iteration (ms): 120.5 | learning rate 3.412E-05 | lm loss 2.8167 | perplexity 16.7215 |
+time (ms) | forward: 27.18 | backward: 74.17 | allreduce: 16.16 | optimizer: 18.61 | data loader: 0.08
+ iteration     2300/   20000 | elapsed time per iteration (ms): 120.5 | learning rate 2.815E-05 | lm loss 2.7605 | perplexity 15.8070 |
+time (ms) | forward: 27.17 | backward: 74.22 | allreduce: 16.15 | optimizer: 18.60 | data loader: 0.08
+ iteration     2400/   20000 | elapsed time per iteration (ms): 120.2 | learning rate 2.264E-05 | lm loss 2.8866 | perplexity 17.9325 |
+time (ms) | forward: 27.14 | backward: 73.91 | allreduce: 16.15 | optimizer: 18.60 | data loader: 0.08
+ iteration     2500/   20000 | elapsed time per iteration (ms): 120.5 | learning rate 1.763E-05 | lm loss 2.7089 | perplexity 15.0121 |
+time (ms) | forward: 27.15 | backward: 74.21 | allreduce: 16.15 | optimizer: 18.60 | data loader: 0.08
+ iteration     2600/   20000 | elapsed time per iteration (ms): 120.8 | learning rate 1.317E-05 | lm loss 2.7401 | perplexity 15.4889 |
+time (ms) | forward: 27.20 | backward: 74.45 | allreduce: 16.17 | optimizer: 18.60 | data loader: 0.08
+ iteration     2700/   20000 | elapsed time per iteration (ms): 120.8 | learning rate 9.305E-06 | lm loss 2.7149 | perplexity 15.1035 |
+time (ms) | forward: 27.11 | backward: 74.60 | allreduce: 16.14 | optimizer: 18.59 | data loader: 0.07
+ iteration     2800/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 6.075E-06 | lm loss 2.7039 | perplexity 14.9385 |
+time (ms) | forward: 27.16 | backward: 74.85 | allreduce: 16.15 | optimizer: 18.59 | data loader: 0.08
+ iteration     2900/   20000 | elapsed time per iteration (ms): 121.0 | learning rate 3.509E-06 | lm loss 2.7137 | perplexity 15.0856 |
+time (ms) | forward: 27.14 | backward: 74.77 | allreduce: 16.15 | optimizer: 18.59 | data loader: 0.08
+ iteration     3000/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.631E-06 | lm loss 2.6463 | perplexity 14.1012 |
+time (ms) | forward: 27.22 | backward: 74.77 | allreduce: 16.16 | optimizer: 18.59 | data loader: 0.08
+global rank 0 is saving checkpoint at iteration    3000 to model/iter_0003000/mp_rank_00/model_optim_rng.pt
+  successfully saved model/iter_0003000/mp_rank_00/model_optim_rng.pt
+ iteration     3100/   20000 | elapsed time per iteration (ms): 152.7 | learning rate 1.000E-06 | lm loss 2.7224 | perplexity 15.2169 |
+time (ms) | forward: 27.51 | backward: 75.14 | allreduce: 16.14 | optimizer: 18.60 | data loader: 0.08
+ iteration     3200/   20000 | elapsed time per iteration (ms): 121.3 | learning rate 1.000E-06 | lm loss 2.7964 | perplexity 16.3850 |
+time (ms) | forward: 27.17 | backward: 75.05 | allreduce: 16.14 | optimizer: 18.60 | data loader: 0.07
+ iteration     3300/   20000 | elapsed time per iteration (ms): 121.4 | learning rate 1.000E-06 | lm loss 2.7059 | perplexity 14.9670 |
+time (ms) | forward: 27.13 | backward: 75.18 | allreduce: 16.13 | optimizer: 18.59 | data loader: 0.08
+ iteration     3400/   20000 | elapsed time per iteration (ms): 120.9 | learning rate 1.000E-06 | lm loss 2.6545 | perplexity 14.2175 |
+time (ms) | forward: 27.16 | backward: 74.70 | allreduce: 16.13 | optimizer: 18.59 | data loader: 0.08
+ iteration     3500/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.000E-06 | lm loss 2.8099 | perplexity 16.6074 |
+time (ms) | forward: 27.23 | backward: 74.77 | allreduce: 16.14 | optimizer: 18.59 | data loader: 0.08
+ iteration     3600/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.000E-06 | lm loss 2.5833 | perplexity 13.2410 |
+time (ms) | forward: 27.18 | backward: 74.82 | allreduce: 16.13 | optimizer: 18.58 | data loader: 0.08
+ iteration     3700/   20000 | elapsed time per iteration (ms): 121.3 | learning rate 1.000E-06 | lm loss 2.7105 | perplexity 15.0370 |
+time (ms) | forward: 27.18 | backward: 75.07 | allreduce: 16.14 | optimizer: 18.59 | data loader: 0.08
+ iteration     3800/   20000 | elapsed time per iteration (ms): 121.7 | learning rate 1.000E-06 | lm loss 2.7445 | perplexity 15.5570 |
+time (ms) | forward: 27.09 | backward: 75.52 | allreduce: 16.13 | optimizer: 18.59 | data loader: 0.07
+ iteration     3900/   20000 | elapsed time per iteration (ms): 121.3 | learning rate 1.000E-06 | lm loss 2.7285 | perplexity 15.3103 |
+time (ms) | forward: 27.16 | backward: 75.02 | allreduce: 16.12 | optimizer: 18.59 | data loader: 0.08
+ iteration     4000/   20000 | elapsed time per iteration (ms): 121.0 | learning rate 1.000E-06 | lm loss 2.8125 | perplexity 16.6515 |
+time (ms) | forward: 27.12 | backward: 74.79 | allreduce: 16.12 | optimizer: 18.58 | data loader: 0.07
+global rank 0 is saving checkpoint at iteration    4000 to model/iter_0004000/mp_rank_00/model_optim_rng.pt
+  successfully saved model/iter_0004000/mp_rank_00/model_optim_rng.pt
+ iteration     4100/   20000 | elapsed time per iteration (ms): 153.0 | learning rate 1.000E-06 | lm loss 2.7318 | perplexity 15.3602 |
+time (ms) | forward: 27.54 | backward: 75.34 | allreduce: 16.20 | optimizer: 18.61 | data loader: 0.08
+ iteration     4200/   20000 | elapsed time per iteration (ms): 121.6 | learning rate 1.000E-06 | lm loss 2.7027 | perplexity 14.9198 |
+time (ms) | forward: 27.23 | backward: 75.26 | allreduce: 16.17 | optimizer: 18.60 | data loader: 0.08
+ iteration     4300/   20000 | elapsed time per iteration (ms): 121.5 | learning rate 1.000E-06 | lm loss 2.6166 | perplexity 13.6894 |
+time (ms) | forward: 27.11 | backward: 75.35 | allreduce: 16.15 | optimizer: 18.59 | data loader: 0.08
+ iteration     4400/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.000E-06 | lm loss 2.6096 | perplexity 13.5930 |
+time (ms) | forward: 27.14 | backward: 74.86 | allreduce: 16.15 | optimizer: 18.59 | data loader: 0.08
+ iteration     4500/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.000E-06 | lm loss 2.7187 | perplexity 15.1599 |
+time (ms) | forward: 27.13 | backward: 74.94 | allreduce: 16.14 | optimizer: 18.58 | data loader: 0.07
+ iteration     4600/   20000 | elapsed time per iteration (ms): 121.0 | learning rate 1.000E-06 | lm loss 2.7196 | perplexity 15.1738 |
+time (ms) | forward: 27.18 | backward: 74.75 | allreduce: 16.15 | optimizer: 18.58 | data loader: 0.08
+ iteration     4700/   20000 | elapsed time per iteration (ms): 121.0 | learning rate 1.000E-06 | lm loss 2.7131 | perplexity 15.0761 |
+time (ms) | forward: 27.10 | backward: 74.80 | allreduce: 16.14 | optimizer: 18.59 | data loader: 0.07
+ iteration     4800/   20000 | elapsed time per iteration (ms): 121.3 | learning rate 1.000E-06 | lm loss 2.7327 | perplexity 15.3750 |
+time (ms) | forward: 27.09 | backward: 75.11 | allreduce: 16.15 | optimizer: 18.59 | data loader: 0.07
+ iteration     4900/   20000 | elapsed time per iteration (ms): 121.3 | learning rate 1.000E-06 | lm loss 2.8040 | perplexity 16.5102 |
+time (ms) | forward: 27.13 | backward: 75.12 | allreduce: 16.15 | optimizer: 18.59 | data loader: 0.08
+ iteration     5000/   20000 | elapsed time per iteration (ms): 121.4 | learning rate 1.000E-06 | lm loss 2.6998 | perplexity 14.8761 |
+time (ms) | forward: 27.18 | backward: 75.17 | allreduce: 16.15 | optimizer: 18.59 | data loader: 0.08
+global rank 0 is saving checkpoint at iteration    5000 to model/iter_0005000/mp_rank_00/model_optim_rng.pt
+  successfully saved model/iter_0005000/mp_rank_00/model_optim_rng.pt
+ iteration     5100/   20000 | elapsed time per iteration (ms): 152.3 | learning rate 1.000E-06 | lm loss 2.6841 | perplexity 14.6451 |
+time (ms) | forward: 27.37 | backward: 75.05 | allreduce: 16.12 | optimizer: 18.59 | data loader: 0.07
+ iteration     5200/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.000E-06 | lm loss 2.6981 | perplexity 14.8519 |
+time (ms) | forward: 27.09 | backward: 74.95 | allreduce: 16.12 | optimizer: 18.59 | data loader: 0.08
+ iteration     5300/   20000 | elapsed time per iteration (ms): 121.5 | learning rate 1.000E-06 | lm loss 2.6261 | perplexity 13.8199 |
+time (ms) | forward: 27.22 | backward: 75.15 | allreduce: 16.14 | optimizer: 18.60 | data loader: 0.07
+ iteration     5400/   20000 | elapsed time per iteration (ms): 121.2 | learning rate 1.000E-06 | lm loss 2.7072 | perplexity 14.9879 |
+time (ms) | forward: 27.16 | backward: 74.95 | allreduce: 16.12 | optimizer: 18.59 | data loader: 0.08
+ iteration     5500/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.000E-06 | lm loss 2.7774 | perplexity 16.0770 |
+time (ms) | forward: 27.16 | backward: 74.85 | allreduce: 16.13 | optimizer: 18.59 | data loader: 0.08
+ iteration     5600/   20000 | elapsed time per iteration (ms): 120.9 | learning rate 1.000E-06 | lm loss 2.7756 | perplexity 16.0484 |
+time (ms) | forward: 27.13 | backward: 74.73 | allreduce: 16.12 | optimizer: 18.58 | data loader: 0.07
+ iteration     5700/   20000 | elapsed time per iteration (ms): 121.4 | learning rate 1.000E-06 | lm loss 2.6988 | perplexity 14.8612 |
+time (ms) | forward: 27.30 | backward: 75.00 | allreduce: 16.17 | optimizer: 18.60 | data loader: 0.08
+ iteration     5800/   20000 | elapsed time per iteration (ms): 121.4 | learning rate 1.000E-06 | lm loss 2.6656 | perplexity 14.3770 |
+time (ms) | forward: 27.25 | backward: 74.99 | allreduce: 16.16 | optimizer: 18.60 | data loader: 0.08
+ iteration     5900/   20000 | elapsed time per iteration (ms): 121.2 | learning rate 1.000E-06 | lm loss 2.7206 | perplexity 15.1887 |
+time (ms) | forward: 27.16 | backward: 74.95 | allreduce: 16.14 | optimizer: 18.60 | data loader: 0.08
+ iteration     6000/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.000E-06 | lm loss 2.7610 | perplexity 15.8164 |
+time (ms) | forward: 27.19 | backward: 74.83 | allreduce: 16.18 | optimizer: 18.60 | data loader: 0.08
+global rank 0 is saving checkpoint at iteration    6000 to model/iter_0006000/mp_rank_00/model_optim_rng.pt
+  successfully saved model/iter_0006000/mp_rank_00/model_optim_rng.pt
+ iteration     6100/   20000 | elapsed time per iteration (ms): 152.7 | learning rate 1.000E-06 | lm loss 2.7102 | perplexity 15.0317 |
+time (ms) | forward: 27.65 | backward: 74.66 | allreduce: 16.18 | optimizer: 18.62 | data loader: 0.08
+ iteration     6200/   20000 | elapsed time per iteration (ms): 120.8 | learning rate 1.000E-06 | lm loss 2.6960 | perplexity 14.8204 |
+time (ms) | forward: 27.21 | backward: 74.50 | allreduce: 16.15 | optimizer: 18.60 | data loader: 0.08
+ iteration     6300/   20000 | elapsed time per iteration (ms): 121.0 | learning rate 1.000E-06 | lm loss 2.7452 | perplexity 15.5672 |
+time (ms) | forward: 27.21 | backward: 74.75 | allreduce: 16.14 | optimizer: 18.59 | data loader: 0.08
+ iteration     6400/   20000 | elapsed time per iteration (ms): 121.4 | learning rate 1.000E-06 | lm loss 2.7757 | perplexity 16.0501 |
+time (ms) | forward: 27.25 | backward: 74.98 | allreduce: 16.15 | optimizer: 18.60 | data loader: 0.08
+ iteration     6500/   20000 | elapsed time per iteration (ms): 121.0 | learning rate 1.000E-06 | lm loss 2.7122 | perplexity 15.0627 |
+time (ms) | forward: 27.18 | backward: 74.75 | allreduce: 16.14 | optimizer: 18.60 | data loader: 0.08
+ iteration     6600/   20000 | elapsed time per iteration (ms): 120.8 | learning rate 1.000E-06 | lm loss 2.7321 | perplexity 15.3657 |
+time (ms) | forward: 27.12 | backward: 74.63 | allreduce: 16.13 | optimizer: 18.61 | data loader: 0.07
+ iteration     6700/   20000 | elapsed time per iteration (ms): 120.5 | learning rate 1.000E-06 | lm loss 2.6792 | perplexity 14.5740 |
+time (ms) | forward: 27.09 | backward: 74.39 | allreduce: 16.12 | optimizer: 18.58 | data loader: 0.07
+ iteration     6800/   20000 | elapsed time per iteration (ms): 120.6 | learning rate 1.000E-06 | lm loss 2.7032 | perplexity 14.9279 |
+time (ms) | forward: 27.20 | backward: 74.36 | allreduce: 16.13 | optimizer: 18.59 | data loader: 0.08
+
+ iteration     6900/   20000 | elapsed time per iteration (ms): 121.1 | learning rate 1.000E-06 | lm loss 2.6876 | perplexity 14.6960 |
+time (ms) | forward: 27.11 | backward: 74.92 | allreduce: 16.13 | optimizer: 18.59 | data loader: 0.08
+ iteration     7000/   20000 | elapsed time per iteration (ms): 121.0 | learning rate 1.000E-06 | lm loss 2.7609 | perplexity 15.8144 |
+time (ms) | forward: 27.02 | backward: 74.90 | allreduce: 16.14 | optimizer: 18.60 | data loader: 0.07
+global rank 0 is saving checkpoint at iteration    7000 to model/iter_0007000/mp_rank_00/model_optim_rng.pt
+Connection to ec2-13-48-132-250.eu-north-1.compute.amazonaws.com closed by remote host.
+Connection to ec2-13-48-132-250.eu-north-1.compute.amazonaws.com closed.
+denismashukov@Deniss-MacBook-Pro .ssh %
+denismashukov@Deniss-MacBook-Pro .ssh %
+denismashukov@Deniss-MacBook-Pro .ssh %

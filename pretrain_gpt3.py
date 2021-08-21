@@ -23,7 +23,7 @@ from datetime import datetime
 import numpy as np
 import torch
 import torch.distributed as dist
-from apex.optimizers import FusedAdam as Adam
+#from apex.optimizers import FusedAdam as Adam
 from torch.utils.tensorboard import SummaryWriter
 
 from src import mpu
@@ -77,7 +77,8 @@ def get_model(args):
     if args.load_huggingface is not None:
         model = load_huggingface_model(model, args.load_huggingface, args.huggingface_double_pos_embeddings)
 
-    if mpu.get_data_parallel_rank() == 0:
+    #if mpu.get_data_parallel_rank() == 0:
+    if False:
         print(' > number of parameters on model parallel rank {}: {}'.format(
             mpu.get_model_parallel_rank(),
             sum([p.nelement() for p in model.parameters()])), flush=True)
@@ -87,7 +88,7 @@ def get_model(args):
         model.half()
 
     # GPU allocation.
-    model.cuda(torch.cuda.current_device())
+    #model.cuda(torch.cuda.current_device())
 
     # Fp16 conversion.
     if args.fp16:
@@ -98,8 +99,8 @@ def get_model(args):
         i = torch.cuda.current_device()
         model = DDP(model, device_ids=[i], output_device=i,
                     process_group=mpu.get_data_parallel_group())
-    else:
-        model = DDP(model)
+    #else:
+    #    model = DDP(model)
 
     return model
 
@@ -119,17 +120,19 @@ def get_optimizer(model, args):
                 param.model_parallel = False
 
     if args.cpu_optimizer:
+        cpu_adam_optimizer = torch.optim.Adam
+
         if args.cpu_torch_adam:
             cpu_adam_optimizer = torch.optim.Adam
-        else:
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-            cpu_adam_optimizer = DeepSpeedCPUAdam
+        #else:
+        #    from deepspeed.ops.adam import DeepSpeedCPUAdam
+        #    cpu_adam_optimizer = DeepSpeedCPUAdam
         optimizer = cpu_adam_optimizer(param_groups,
                                        lr=args.lr, weight_decay=args.weight_decay)
-    else:
+    #else:
         # Use FusedAdam.
-        optimizer = Adam(param_groups,
-                         lr=args.lr, weight_decay=args.weight_decay)
+        #optimizer = Adam(param_groups,
+       #                  lr=args.lr, weight_decay=args.weight_decay)
 
     print(f'Optimizer = {optimizer.__class__.__name__}')
     if DEEPSPEED_WRAP and args.deepspeed:
@@ -638,10 +641,10 @@ def initialize_distributed(args):
     """Initialize torch.distributed."""
 
     # Manually set the device ids.
-    device = args.rank % torch.cuda.device_count()
+    #device = args.rank % torch.cuda.device_count()
     if args.local_rank is not None:
         device = args.local_rank
-    torch.cuda.set_device(device)
+#    torch.cuda.set_device(device)
     # Call the init process
     init_method = 'tcp://'
     master_ip = os.getenv('MASTER_ADDR', 'localhost')
@@ -668,7 +671,7 @@ def set_random_seed(seed):
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
-        mpu.model_parallel_cuda_manual_seed(seed)
+#        mpu.model_parallel_cuda_manual_seed(seed)
 
 
 def get_train_val_test_data(args):
@@ -677,26 +680,27 @@ def get_train_val_test_data(args):
     (train_data, val_data, test_data) = (None, None, None)
 
     # Data loader only on rank 0 of each model parallel group.
-    if mpu.get_model_parallel_rank() == 0:
-        (train_data, val_data, test_data), num_tokens, eod_token, tokenizer = make_gpt3_dataloaders(args)
-        before = num_tokens
-        after = before
-        multiple = args.make_vocab_size_divisible_by * mpu.get_model_parallel_world_size()
-        while (after % multiple) != 0:
-            after += 1
-        print_rank_0(
-            '> padded vocab (size: {}) with {} dummy tokens (new size: {})'.format(before, after - before, after))
-        print_rank_0('> end-of-document token: {}'.format(eod_token))
-        token_counts = torch.cuda.LongTensor(
-            [after, eod_token, int(args.do_train), int(args.do_valid), int(args.do_test)])
-    else:
-        tokenizer = None
-        token_counts = torch.cuda.LongTensor([0, 0, 0, 0, 0])
+    #if mpu.get_model_parallel_rank() == 0:
+    (train_data, val_data, test_data), num_tokens, eod_token, tokenizer = make_gpt3_dataloaders(args)
+    before = num_tokens
+    after = before
+    multiple = args.make_vocab_size_divisible_by * mpu.get_model_parallel_world_size()
+    while (after % multiple) != 0:
+        after += 1
+    print_rank_0(
+        '> padded vocab (size: {}) with {} dummy tokens (new size: {})'.format(before, after - before, after))
+    print_rank_0('> end-of-document token: {}'.format(eod_token))
+    token_counts = torch.LongTensor(
+        [after, eod_token, int(args.do_train), int(args.do_valid), int(args.do_test)])
+    #else:
+    #tokenizer = None
+    #token_counts = torch.cuda.LongTensor([0, 0, 0, 0, 0])
+    #token_counts = torch.LongTensor([0, 0, 0, 0, 0])
 
     # Broadcast num tokens.
-    torch.distributed.broadcast(token_counts,
-                                mpu.get_model_parallel_src_rank(),
-                                group=mpu.get_model_parallel_group())
+    #torch.distributed.broadcast(token_counts,
+    #                            mpu.get_model_parallel_src_rank(),
+    #                            group=mpu.get_model_parallel_group())
     num_tokens = token_counts[0].item()
     eod_token = token_counts[1].item()
     args.do_train = token_counts[2].item()
@@ -713,19 +717,19 @@ def generate(model, tokenizer, raw_text, out_seq_length=256, seq_length=512, tem
     if context_length < seq_length:
         context_tokens.extend([pad_id] * (seq_length - context_length))
 
-    context_tokens_tensor = torch.cuda.LongTensor(context_tokens)
-    context_length_tensor = torch.cuda.LongTensor([context_length])
+    context_tokens_tensor = torch.LongTensor(context_tokens)
+    context_length_tensor = torch.LongTensor([context_length])
 
-    torch.distributed.broadcast(context_length_tensor, mpu.get_model_parallel_src_rank(),
-                                group=mpu.get_model_parallel_group())
-    torch.distributed.broadcast(context_tokens_tensor, mpu.get_model_parallel_src_rank(),
-                                group=mpu.get_model_parallel_group())
+#    torch.distributed.broadcast(context_length_tensor, mpu.get_model_parallel_src_rank(),
+#                                group=mpu.get_model_parallel_group())
+#    torch.distributed.broadcast(context_tokens_tensor, mpu.get_model_parallel_src_rank(),
+#                                group=mpu.get_model_parallel_group())
 
     context_length = context_length_tensor[0].item()
 
     tokens = context_tokens_tensor
     tokens = tokens.view(1, -1).contiguous()
-    tokens = tokens.to(torch.cuda.current_device())
+    #tokens = tokens.to(torch.cuda.current_device())
     attention_mask, loss_mask, position_ids = get_masks_and_position_ids(tokens, pad_id, False, False)
 
     counter = 0
@@ -760,6 +764,8 @@ def main():
 
     # Disable CuDNN.
     torch.backends.cudnn.enabled = False
+    torch.backends.cuda.enabled = False
+    f = torch._C
 
     # Timer.
     timers = Timers()
@@ -771,10 +777,10 @@ def main():
     #         args.make_vocab_size_divisible_by = 1
 
     # Pytorch distributed.
-    initialize_distributed(args)
-    if torch.distributed.get_rank() == 0:
-        print('Pretrain GPT3 model')
-        print_args(args)
+    #initialize_distributed(args)
+#    if torch.distributed.get_rank() == 0:
+#        print('Pretrain GPT3 model')
+#        print_args(args)
 
     # Random seeds for reproducability.
     set_random_seed(args.seed)

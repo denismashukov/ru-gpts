@@ -19,7 +19,7 @@ import os
 import time
 
 import torch
-from transformers.tokenization_gpt2 import GPT2Tokenizer
+from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
 
 from src import mpu
 from src.arguments import get_args
@@ -31,7 +31,7 @@ from pretrain_gpt3 import initialize_distributed
 from pretrain_gpt3 import set_random_seed
 from src.utils import Timers
 from src.utils import export_to_huggingface_model
-from src.utils import print_rank_0, load_checkpoint, DEEPSPEED_WRAP
+from src.utils import print_rank_0, load_checkpoint, load_model, DEEPSPEED_WRAP
 
 
 def get_model(args):
@@ -56,14 +56,14 @@ def get_model(args):
             sum([p.nelement() for p in model.parameters()])), flush=True)
 
     # GPU allocation.
-    model.cuda(torch.cuda.current_device())
+    #model.cuda(torch.cuda.current_device())
 
     # Fp16 conversion.
     if args.fp16:
         model = FP16_Module(model)
 
     # Wrap model for distributed training.
-    model = DDP(model)
+    #model = DDP(model)
 
     return model
 
@@ -84,8 +84,9 @@ def setup_model(args):
             dist_init_required=False
         )
 
-    print("Load checkpoint from " + args.load)
-    _ = load_checkpoint(model, None, None, args, deepspeed=DEEPSPEED_WRAP and args.deepspeed)
+#    print("Load checkpoint from " + args.load)
+    #_ = load_checkpoint(model, None, None, args, deepspeed=DEEPSPEED_WRAP and args.deepspeed)
+    model = load_model(model, args)
     model.eval()
     print("Loaded")
     if args.export_huggingface is not None:
@@ -99,7 +100,7 @@ def generate_samples(model, tokenizer, args):
     model.eval()
     with torch.no_grad():
         while True:
-            torch.distributed.barrier(group=mpu.get_model_parallel_group())
+            #torch.distributed.barrier(group=mpu.get_model_parallel_group())
             terminate_runs = 0
 
             if mpu.get_model_parallel_rank() == 0:
@@ -121,9 +122,9 @@ def generate_samples(model, tokenizer, args):
             else:
                 _ = tokenizer("EMPTY TEXT")['input_ids']
 
-            terminate_runs_tensor = torch.cuda.LongTensor([terminate_runs])
-            torch.distributed.broadcast(terminate_runs_tensor, mpu.get_model_parallel_src_rank(),
-                                        group=mpu.get_model_parallel_group())
+            terminate_runs_tensor = torch.LongTensor([terminate_runs])
+            #torch.broadcast(terminate_runs_tensor, mpu.get_model_parallel_src_rank(),
+            #                            group=mpu.get_model_parallel_group())
             terminate_runs = terminate_runs_tensor[0].item()
 
             if terminate_runs == 1:
@@ -146,11 +147,12 @@ def generate_samples(model, tokenizer, args):
                 print("\nGPT:", generated, flush=True)
             raw_text = None
 
-            torch.distributed.barrier(group=mpu.get_model_parallel_group())
+            #torch.distributed.barrier(group=mpu.get_model_parallel_group())
 
 
 def prepare_tokenizer(args):
     tokenizer = GPT2Tokenizer.from_pretrained(args.tokenizer_path)
+
     eod_token = tokenizer.encoder['<pad>']
     num_tokens = len(tokenizer)
 
@@ -182,7 +184,7 @@ def main():
     args = get_args()
 
     # Pytorch distributed.
-    initialize_distributed(args)
+    #initialize_distributed(args)
 
     # Random seeds for reproducability.
     set_random_seed(args.seed)
