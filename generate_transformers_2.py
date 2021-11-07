@@ -232,25 +232,32 @@ def main():
                     if len(feedback_3) > 100:
                         idx_1 = feedback_3.find('.')
                         idx_2 = feedback_3.find('!')
-                        idx_end = idx_1 if idx_1 < idx_2 else idx_2
+                        idx_3 = feedback_3.find(',')
+
+                        if idx_1 > 40:
+                            idx_end = idx_1
+                        elif idx_2 > idx_1:
+                            idx_end = idx_2
+                        else:
+                            idx_end = idx_3
+
                         if idx_end > 0:
                             feedback_4 = feedback_3[0:idx_end + 1]
-                            if len(feedback_4) > 10:
+                            if len(feedback_4) > 40:
                                 res = feedback_4.replace('feedback:', '').replace('feedsback:', '')
                                 res = res.replace('feed-back:', '').strip()
                                 idx_3 = res.find('\n')
                                 idx_start = (idx_3 + 1) if idx_3 < 10 else 0
                                 res = res[idx_start:].strip()
-                                if len(res) > 10:
+                                if len(res) > 40:
                                     corpus.append(res)
 
-    vect = TfidfVectorizer(min_df=1, stop_words=stop_words)
-    tfidf = vect.fit_transform(corpus)
+    vectorizer = TfidfVectorizer(min_df=1, stop_words=stop_words)
+    tfidf = vectorizer.fit_transform(corpus)
     pairwise_similarity = tfidf * tfidf.T
 
     # Группирую по косинусу
     arr = pairwise_similarity.toarray()
-    #np.fill_diagonal(arr, np.nan)
 
     ids_used = []
     result = []
@@ -274,11 +281,9 @@ def main():
 
         prompt_text = 'feedback: ' + prompt_seed
 
-        #random_seed = args.seed
         random_seed = randint(0, args.seed)
         set_seed(args.seed, args.n_gpu)
 
-        #temperature = args.temperature
         temperature = round(uniform(0.1, args.temperature), 2)
 
         print("\nIteration: ", index)
@@ -344,6 +349,7 @@ def main():
     file_path = '/home/ubuntu/feedbacks.csv'
     df = pd.DataFrame({'feedback': reviews})
     df.to_csv(file_path, index=False)
+
     print("\nGeneration feedbacks completed. ")
     print("Result saved into: ", file_path)
 
