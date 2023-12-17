@@ -125,10 +125,10 @@ class GPT3ParallelSelfAttention(torch.nn.Module):
 
         if self.use_deepspeed_sparse:
             context_layer = self.sparse_self_attention(
-                query_layer,
-                key_layer,
-                value_layer,
-                attn_mask=ltor_mask)
+                query_layer.half(),
+                key_layer.half(),
+                value_layer.half(),
+                attn_mask=ltor_mask).half()
         else:
             # Raw attention scores. [b, np, s, s]
             attention_scores = torch.matmul(query_layer,
